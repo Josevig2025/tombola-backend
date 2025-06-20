@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 import pandas as pd
 from io import BytesIO
-import ezodf
 from collections import Counter
 from itertools import combinations
 
@@ -18,14 +17,9 @@ app.add_middleware(
 )
 
 def read_ods(file_bytes):
-    doc = ezodf.opendoc(BytesIO(file_bytes))
-    hoja = doc.sheets[0]
-    data = []
-    for row in hoja.rows():
-        values = [cell.value for cell in row]
-        if any(values):
-            data.append(values)
-    return data[1:]  # omitimos encabezado
+    df = pd.read_excel(BytesIO(file_bytes), engine="odf", header=None)
+    data = df.dropna(how='all').values.tolist()[1:]  # omitir encabezado si lo hay
+    return data
 
 def analizar_combinaciones(data, cantidad):
     conteo = Counter()
@@ -41,7 +35,7 @@ async def analyze(file: UploadFile = File(...)):
     data = read_ods(content)
 
     resultados = {}
-    for n in range(3, 8):  # combinaciones de 3 a 7 números
+    for n in range(3, 8):
         conteo = analizar_combinaciones(data, n)
         mas_frecuentes = conteo.most_common(10)
         menos_frecuentes = sorted(

@@ -1,5 +1,6 @@
 fastapi
 uvicorn
 pandas
-ezodf
+odfpy
 python-multipart
+openpyxl
